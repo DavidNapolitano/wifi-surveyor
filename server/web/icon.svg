@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 10 80 80">
+  <!-- Same drawing as drawIcon() in macos/main.swift (the Dock icon). -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#00b8bf"/>
+      <stop offset="1" stop-color="#0d40bf"/>
+    </linearGradient>
+  </defs>
+  <rect x="10" y="10" width="80" height="80" rx="18" fill="url(#g)"/>
+  <g fill="none" stroke="#fff" stroke-width="5.5" stroke-linecap="round">
+    <path d="M59.19 52.81A13 13 0 0 0 40.81 52.81"/>
+    <path d="M66.26 45.74A23 23 0 0 0 33.74 45.74"/>
+    <path d="M73.33 38.67A33 33 0 0 0 26.67 38.67"/>
+  </g>
+  <circle cx="50" cy="62" r="4.5" fill="#fff"/>
+  <polyline points="20,80 30,76 40,82 50,75 60,79 70,74 80,78" fill="none" stroke="#ffd933" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

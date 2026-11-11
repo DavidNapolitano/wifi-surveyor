@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wi-Fi Surveyor</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="appbar">
+    <header class="top">
+      <div class="brand"><span class="logo" aria-hidden="true"></span><span class="name">Wi-Fi Surveyor</span></div>
+      <select id="session" class="session" title="Session: everything you record is saved into it"></select>
+      <span id="scanner" class="pill">starting…</span>
+      <div id="conn" class="conn"></div>
+      <span id="recinfo" class="recinfo"></span>
+      <button id="walkbtn" title="Full-screen view for walking around (W)">Walk mode</button>
+      <button id="record" class="record">● Record</button>
+      <details class="menu">
+        <summary title="Analysis settings">⚙</summary>
+        <div class="menupanel">
+          <label class="field">Target network <select id="target"></select></label>
+          <p class="hint">Network that room analysis is judged by.</p>
+          <label class="field">Dead spot below <span><input id="dead" type="number" min="-100" max="-40" step="1"> dBm</span></label>
+          <label class="field">Room segment
+            <select id="duration">
+              <option value="0">until I switch room</option>
+              <option value="30">30 s</option>
+              <option value="60">1 min</option>
+              <option value="120">2 min</option>
+              <option value="300">5 min</option>
+            </select>
+          </label>
+          <label class="field">Theme
+            <select id="theme">
+              <option value="">System</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </label>
+        </div>
+      </details>
+      <details class="menu">
+        <summary title="More">⋯</summary>
+        <div class="menupanel">
+          <button id="newsession" class="menuitem">New session…</button>
+          <a href="/api/export.csv" class="menuitem">Export CSV</a>
+          <hr>
+          <button id="quit" class="menuitem danger">Quit WiFi Surveyor</button>
+        </div>
+      </details>
+    </header>
+    <div class="roombar">
+      <span class="label">Room</span>
+      <span id="roombtns"></span>
+      <button id="quickroom" class="ghost">+ Room</button>
+      <span id="roomhint" class="hint"></span>
+    </div>
+    <nav class="tabs">
+      <button data-tab="live" class="active">Live</button>
+      <button data-tab="networks">Networks</button>
+      <button data-tab="history">History</button>
+      <button data-tab="channels">Channels</button>
+      <button data-tab="rooms">Rooms</button>
+    </nav>
+  </div>
+  <div id="warn" class="warn" hidden></div>
+  <main>
+
+  <section id="tab-live">
+    <div class="toolbar">
+      <label>Window
+        <select id="lwin">
+          <option value="10">10 sec</option>
+          <option value="30">30 sec</option>
+          <option value="60" selected>1 min</option>
+          <option value="120">2 min</option>
+          <option value="300">5 min</option>
+          <option value="600">10 min</option>
+          <option value="1800">30 min</option>
+        </select>
+      </label>
+      <label>Sort
+        <select id="lsort">
+          <option value="strength">Strongest first</option>
+          <option value="name">Name</option>
+        </select>
+      </label>
+      <label>Hide weaker than
+        <select id="lmin">
+          <option value="0">show all</option>
+          <option value="-90">-90 dBm</option>
+          <option value="-85">-85 dBm</option>
+          <option value="-80">-80 dBm</option>
+          <option value="-70">-70 dBm</option>
+        </select>
+      </label>
+      <span class="hint">Higher = stronger. One pane per network; each line is one access point (BSSID). Live view works with or without recording.</span>
+    </div>
+    <div id="liveempty" class="empty" hidden><b>Waiting for the first scan…</b>Networks appear here a second or two after the scanner starts.</div>
+    <div id="panes" class="panes"></div>
+  </section>
+
+  <section id="tab-networks" hidden>
+    <div class="toolbar">
+      <label>Window
+        <select id="nwin">
+          <option value="60">1 min</option>
+          <option value="300">5 min</option>
+          <option value="900">15 min</option>
+          <option value="3600">1 h</option>
+        </select>
+      </label>
+      <label><input type="checkbox" id="nshowall" checked> Show hidden-by-rule</label>
+      <span class="hint">☆ Track a network to build your list: once anything is tracked, only tracked networks are collected and shown.
+        Hide removes a network or one access point everywhere. Click a column header to sort.</span>
+    </div>
+    <div class="tablewrap"><table id="nets" class="grid nets">
+      <thead><tr>
+        <th data-sort="name">Network / access point</th><th data-sort="band">Band</th><th data-sort="channel">Ch</th>
+        <th>Width</th><th>Standard</th><th data-sort="now">Now</th><th data-sort="avg">Avg</th><th>Min</th><th>Max</th>
+        <th data-sort="seen">Seen</th><th>Quality</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <details class="panel">
+      <summary>All rules (advanced)</summary>
+      <p class="hint">Exclude rules hide a network or access point everywhere (live, history, channels, rooms).
+        If any Include rule exists, only included networks are shown. Rules apply retroactively; Export CSV always contains everything.</p>
+      <form id="ruleform" class="toolbar">
+        <select id="ruleaction"><option value="exclude">Exclude</option><option value="include">Include only</option></select>
+        <select id="rulekind"><option value="ssid">SSID</option><option value="bssid">BSSID</option></select>
+        <input id="rulevalue" list="rulevals" placeholder="network name or aa:bb:cc:dd:ee:ff" maxlength="128" required>
+        <datalist id="rulevals"></datalist>
+        <button>Add rule</button>
+      </form>
+    </details>
+    <div id="rules" class="chips"></div>
+  </section>
+
+  <section id="tab-history" hidden>
+    <div class="toolbar">
+      <label>Range
+        <select id="range">
+          <option value="900">15 min</option>
+          <option value="3600">1 h</option>
+          <option value="21600">6 h</option>
+          <option value="86400">24 h</option>
+          <option value="604800">7 days</option>
+          <option value="630720000">All</option>
+          <option value="custom" hidden>Selected recording</option>
+        </select>
+      </label>
+      <label>Plot by
+        <select id="group">
+          <option value="ssid">SSID (network)</option>
+          <option value="bssid">BSSID (access point)</option>
+        </select>
+      </label>
+      <button id="autoselect">Strongest 8</button>
+      <button id="clearsel">Clear</button>
+      <span id="rangeinfo" class="muted"></span>
+    </div>
+    <div class="chartwrap"><canvas id="chart"></canvas></div>
+    <div id="chips" class="chips"></div>
+    <h3>Recordings in this session</h3>
+    <table id="recs" class="grid">
+      <thead><tr><th>Started</th><th>Length</th><th>Scans</th><th>Rooms</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <h3>Sessions</h3>
+    <p class="hint">Each session keeps its own recordings, rooms and track/hide rules, so separate surveys never mix.</p>
+    <table id="sessions" class="grid">
+      <thead><tr><th>Name</th><th>Recordings</th><th>Scans</th><th>Rooms</th><th>Recorded</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section id="tab-channels" hidden>
+    <div class="toolbar">
+      <label>Band
+        <select id="cband">
+          <option value="2.4">2.4 GHz</option>
+          <option value="5">5 GHz</option>
+          <option value="6">6 GHz</option>
+        </select>
+      </label>
+      <label>Average over
+        <select id="cwin">
+          <option value="10">last scan</option>
+          <option value="60">1 min</option>
+          <option value="300">5 min</option>
+          <option value="1800">30 min</option>
+        </select>
+      </label>
+      <span id="cbest" class="best"></span>
+    </div>
+    <div class="chartwrap"><canvas id="spectrum"></canvas></div>
+    <div class="subgrid">
+      <div><h3>Channel usage (20 MHz slices)</h3><table id="chantable" class="grid"></table></div>
+      <div><h3>Channel changes</h3><table id="chchanges" class="grid"></table></div>
+    </div>
+  </section>
+
+  <section id="tab-rooms" hidden>
+    <div class="toolbar">
+      <form id="addroom" class="toolbar inline">
+        <input id="roomname" placeholder="New room, e.g. Kitchen" maxlength="64" required>
+        <button>Add room</button>
+      </form>
+      <label>Sort
+        <select id="rsort">
+          <option value="best">Strongest first</option>
+          <option value="worst">Weakest first (find dead spots)</option>
+          <option value="name">Name</option>
+        </select>
+      </label>
+      <label>View by
+        <select id="rview">
+          <option value="network">Network</option>
+          <option value="ap">Access point</option>
+        </select>
+      </label>
+      <span class="hint">Judged by <b id="roomtarget"></b> (change in ⚙). Tap a room, walk around it; repeat visits are averaged.</span>
+    </div>
+    <div id="roomcards" class="rcards"></div>
+    <details class="panel compare" id="compare">
+      <summary>Compare rooms × networks</summary>
+      <div class="toolbar">
+        <label>Columns
+          <select id="rmatrix">
+            <option value="ssid">Networks (strongest AP of each)</option>
+            <option value="ap">Access points (by name)</option>
+            <option value="bssid">Individual BSSIDs</option>
+          </select>
+        </label>
+        <span class="hint">Average dBm in each room; outlined = strongest in that room; small % = share of scans it was heard.</span>
+      </div>
+      <div class="matrixwrap"><table id="matrix" class="grid matrix"></table></div>
+    </details>
+  </section>
+  </main>
+
+  <div id="walk" class="walk" hidden>
+    <div class="wtop">
+      <span class="brand"><span class="logo" aria-hidden="true"></span>Walk mode</span>
+      <span id="wsession" class="pill"></span>
+      <span class="spacer"></span>
+      <span id="wrecinfo" class="muted"></span>
+      <button id="wrecord" class="record big">● Record</button>
+      <button id="wexit">Exit (Esc)</button>
+    </div>
+    <div class="wmain">
+      <div class="wcard wsignal">
+        <div class="wlabel" id="wtarget"></div>
+        <div class="wbig"><span id="wnum">–</span><span class="unit">dBm</span><span id="wbadge"></span></div>
+        <div><canvas id="wchart"></canvas></div>
+        <div class="wlabel">Strongest right now</div>
+        <div id="wnets" class="rnets"></div>
+      </div>
+      <div class="wcard wrooms">
+        <div class="wlabel">Current room</div>
+        <div id="wroom" class="wroom"></div>
+        <div class="wlabel">Tap the room you're in</div>
+        <div id="wroombtns" class="wroombtns"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tip" class="tip" hidden></div>
+  <div id="toast" class="toast" hidden></div>
+  <dialog id="apdlg">
+    <form method="dialog">
+      <h3>Name access point</h3>
+      <input id="apname" maxlength="48" placeholder="e.g. Lobby AP, Upstairs hall" required>
+      <p class="hint">One access point usually broadcasts several BSSIDs (one per band and per network). Tick every BSSID that belongs to this AP; likely matches are pre-ticked.</p>
+      <div id="apbssids" class="apbssids"></div>
+      <div class="dlgbtns">
+        <button type="button" id="apclear" class="danger">Remove name</button>
+        <span class="spacer"></span>
+        <button type="button" class="dlgcancel">Cancel</button>
+        <button value="ok" class="primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="ask">
+    <form method="dialog">
+      <h3 id="asktitle"></h3>
+      <input id="askinput" maxlength="64" required>
+      <p id="askhint" class="hint"></p>
+      <div class="dlgbtns">
+        <button type="button" class="dlgcancel">Cancel</button>
+        <button value="ok" class="primary">OK</button>
+      </div>
+    </form>
+  </dialog>
+  <script src="/app.js"></script>
+  <script src="/live.js"></script>
+  <script src="/channels.js"></script>
+</body>
+</html>

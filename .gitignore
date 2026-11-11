@@ -1,0 +1,5 @@
+/WiFiSurveyor.app/
+build/
+data/
+__pycache__/
+.DS_Store

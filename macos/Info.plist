@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleExecutable</key>
+	<string>WiFiSurveyor</string>
+	<key>CFBundleIdentifier</key>
+	<string>local.wifisurveyor.app</string>
+	<key>CFBundleName</key>
+	<string>WiFi Surveyor</string>
+	<key>CFBundleDisplayName</key>
+	<string>WiFi Surveyor</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>2.0</string>
+	<key>CFBundleVersion</key>
+	<string>2</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>13.0</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>The surveyor's code and recorded data live in your project folder.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>macOS requires Location permission to read Wi-Fi network names (SSID) and access point addresses (BSSID) for the survey.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>macOS requires Location permission to read Wi-Fi network names (SSID) and access point addresses (BSSID) for the survey.</string>
+</dict>
+</plist>
